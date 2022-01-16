@@ -18,7 +18,9 @@ const center = [51.505, -0.09];
 const axios = require('axios');
 
 
-var marker_cord; 
+let marker_cord;
+let lat_cord;
+let lng_cord; 
 
 function MapComp (){
  
@@ -35,10 +37,6 @@ function MapComp (){
 
     async function fetchmyapi(){
     const res=await axios.get('http://127.0.0.1:5000/getall');
-  
-    console.log("loaded");
-    console.log(current_mark);
-    console.log(Object.values(res.data));
     setMarkers(Object.values(res.data));
    
     
@@ -55,7 +53,7 @@ function MapComp (){
   const downloadFile = ({  fileName, fileType }) => {
     // Create a blob with the data we want to download as a file
     const data=JSON.stringify(markers);
-    console.log(markers.values());
+  
     const blob = new Blob([data], { type: fileType })
     // Create an anchor element and dispatch a click event on it
     // to trigger a download
@@ -100,8 +98,17 @@ const getcoord=async()=>{
 
 }
 
-const deletecoord=async(cur_id)=>{
-  console.log(cur_id["date"]);
+const deletecoord=async(cur_id,lat,lng)=>{
+
+  let temp_lng=parseFloat(lng["lng"]);
+  let temp_lat=parseFloat(lat["lat"]);
+
+  if(current_mark==1 &&temp_lat==lat_cord&&temp_lng==lng_cord){
+    
+    map.removeLayer(marker_cord);
+
+  }
+ 
   await axios({
     method: 'DELETE',
     url: 'http://127.0.0.1:5000/delete',
@@ -128,20 +135,20 @@ const getalldata=async()=>{
 
 
 function move_map(curlat,curlng){
-  console.log(current_mark);
+ 
   if(current_mark==1){
 
     map.removeLayer(marker_cord);
 
   }
 
-  let new_lat=parseFloat(curlat["lat"]);
-  let new_lng=parseFloat(curlng["lng"]);
+  lat_cord=parseFloat(curlat["lat"]);
+  lng_cord=parseFloat(curlng["lng"]);
   marker_cord=new L.marker([curlat["lat"], curlng["lng"]]);
   
   setcurrentmarker(1);
   map.addLayer(marker_cord);
-  map.panTo(new L.LatLng(new_lat,new_lng),13);
+  map.panTo(new L.LatLng(lat_cord,lng_cord),13);
 }
 
 function Item(props) {
@@ -157,7 +164,7 @@ function Item(props) {
               <td onClick={() => { move_map({lat},{lng});}} >GO</td>
                     <td width="150px">{lat}</td>
                     <td width="150px">{lng}</td>
-                    <td onClick={() => { deletecoord({date});}}>Delete
+                    <td onClick={() => { deletecoord({date},{lat},{lng});}}>Delete
                     </td>
                     </tr>
               </tbody>
